@@ -1,9 +1,6 @@
 <template>
-    <div class="main">
-        <div class="header">
-            <h1>Word Translator</h1>
-            <p>Powered By Vue.js</p>
-        </div>
+    <div class="main" id="main">
+        <my-header></my-header>
         <div class="input-area">
             <input type="text" v-model="translateTxt" @input="detectLanguage">
             <select name="" id="" v-model="selected">
@@ -12,14 +9,13 @@
             <input type="button" value="TRANSLATE" @click="translateText">
         </div>
         <p></p>
-        <div class="result">
-            <span>翻译结果</span>
-            <p>{{translateResult}}</p>
-        </div>
+        <show-result :result="translateResult"></show-result>
     </div>
 </template>
 
 <script>
+import myHeader from './my-header.vue'
+import showResult from './show-result.vue'
 export default {
     name:"Main",
     data(){
@@ -28,12 +24,13 @@ export default {
             translateTxt:"",
             translateTxtLang:"",
             selected:"en",
-            translateResult:""
+            translateResult:"",
+            loading:true
         }
     },
     methods:{
         getLanguageList(){
-            this.axios.get("https://translate.yandex.net/api/v1.5/tr.json/getLangs?key=trnsl.1.1.20190125T022104Z.3235ec78c545d752.aab2cda069d6453dffb2b0c7fc6fd576956d5962&ui=en")
+            this.axios.get("/api/v1.5/tr.json/getLangs?key=trnsl.1.1.20190125T022104Z.3235ec78c545d752.aab2cda069d6453dffb2b0c7fc6fd576956d5962&ui=en")
             .then((res)=>{
                 let result=res.data.langs;
                 // console.log(result);
@@ -47,7 +44,10 @@ export default {
             })
         },
         detectLanguage(){
-            this.axios.get("https://translate.yandex.net/api/v1.5/tr.json/detect?key=trnsl.1.1.20190125T022104Z.3235ec78c545d752.aab2cda069d6453dffb2b0c7fc6fd576956d5962&text="+this.translateTxt)
+            // 不使用拦截器
+            let instance=this.axios.create();
+            this.axios.interceptors.request.eject(instance);
+            instance.get("/api/v1.5/tr.json/detect?key=trnsl.1.1.20190125T022104Z.3235ec78c545d752.aab2cda069d6453dffb2b0c7fc6fd576956d5962&text="+this.translateTxt)
             .then((res)=>{
                 let result=res.data;
                 if(result.code==200)
@@ -60,7 +60,10 @@ export default {
             })
         },
         translateText(){
-            this.axios.get("https://translate.yandex.net/api/v1.5/tr.json/translate?key=trnsl.1.1.20190125T022104Z.3235ec78c545d752.aab2cda069d6453dffb2b0c7fc6fd576956d5962&text="+this.translateTxt+"&lang="+this.translateTxtLang+"-"+this.selected)
+            // 不使用拦截器
+            let instance=this.axios.create();
+            this.axios.interceptors.request.eject(instance);
+            instance.get("/api/v1.5/tr.json/translate?key=trnsl.1.1.20190125T022104Z.3235ec78c545d752.aab2cda069d6453dffb2b0c7fc6fd576956d5962&text="+this.translateTxt+"&lang="+this.translateTxtLang+"-"+this.selected)
             .then((res)=>{
                 let result=res.data;
                 if(result.code==200)
@@ -73,6 +76,9 @@ export default {
             })
         }
     },
+    components:{
+        myHeader,showResult
+    },
     mounted(){
         this.getLanguageList();
     }
@@ -84,18 +90,7 @@ export default {
     width:100%;
     height:100%;
 }
-.header{
-    width:100%;
-    height:20%;
-    border-bottom:1px solid #e5e5e5;
-}
-.header>h1{
-    font-size:50px;
-}
-.header>p{
-    color:#999;
-    font-size:24px;
-}
+
 .input-area{
     width:600px;
     height:80px;
@@ -110,7 +105,8 @@ export default {
     border:none;
     border-bottom:1px solid #999;
     background:transparent;
-    font-size:16px;
+    font-size:18px;
+    outline: none;
 }
 .input-area>select{
     width:160px;
@@ -123,7 +119,8 @@ export default {
     background:url("../assets/三角.png") no-repeat right center;
     background-size: 30px 30px;
     font-family: 'Courier New', Courier, monospace;
-    font-size: 16px;
+    font-size: 18px;
+    outline:none;
 }
 .input-area>input[type="button"]{
     width:100px;
